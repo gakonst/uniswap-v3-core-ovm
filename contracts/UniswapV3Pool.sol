@@ -388,56 +388,38 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         uint256 _feeGrowthGlobal0X128 = feeGrowthGlobal0X128; // SLOAD for gas optimization
         uint256 _feeGrowthGlobal1X128 = feeGrowthGlobal1X128; // SLOAD for gas optimization
 
-        // if we need to update the ticks, do it
-        bool flippedLower;
-        bool flippedUpper;
-        if (liquidityDelta != 0) {
-            uint32 time = _blockTimestamp();
-            (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) =
-                observations.observeSingle(
-                    time,
-                    0,
-                    slot0.tick,
-                    slot0.observationIndex,
-                    liquidity,
-                    slot0.observationCardinality
-                );
-
-            flippedLower = ticks.update(
-                tickLower,
-                tick,
-                liquidityDelta,
-                _feeGrowthGlobal0X128,
-                _feeGrowthGlobal1X128,
-                secondsPerLiquidityCumulativeX128,
-                tickCumulative,
+        bytes memory data;
+        {
+        uint32 time = _blockTimestamp();
+        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) =
+            observations.observeSingle(
                 time,
-                false,
-                maxLiquidityPerTick
+                0,
+                slot0.tick,
+                slot0.observationIndex,
+                liquidity,
+                slot0.observationCardinality
             );
-            flippedUpper = ticks.update(
-                tickUpper,
-                tick,
-                liquidityDelta,
-                _feeGrowthGlobal0X128,
-                _feeGrowthGlobal1X128,
-                secondsPerLiquidityCumulativeX128,
-                tickCumulative,
-                time,
-                true,
-                maxLiquidityPerTick
-            );
-
-            if (flippedLower) {
-                tickBitmap.flipTick(tickLower, tickSpacing);
-            }
-            if (flippedUpper) {
-                tickBitmap.flipTick(tickUpper, tickSpacing);
-            }
+        // NB: Work around stack too deep.
+        data = abi.encode(secondsPerLiquidityCumulativeX128, tickCumulative, time, maxLiquidityPerTick);
         }
 
-        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
-            ticks.getFeeGrowthInside(tickLower, tickUpper, tick, _feeGrowthGlobal0X128, _feeGrowthGlobal1X128);
+        (bool flippedLower, bool flippedUpper, uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = ticks.updateAndGetFeeGrowth(
+            tickLower,
+            tickUpper,
+            tick,
+            liquidityDelta,
+            _feeGrowthGlobal0X128,
+            _feeGrowthGlobal1X128,
+            data
+        );
+
+        if (flippedLower) {
+            tickBitmap.flipTick(tickLower, tickSpacing);
+        }
+        if (flippedUpper) {
+            tickBitmap.flipTick(tickUpper, tickSpacing);
+        }
 
         position.update(liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128);
 

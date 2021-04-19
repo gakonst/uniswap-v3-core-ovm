@@ -42,6 +42,8 @@ contract TickOverflowSafetyEchidnaTest {
         require(tickLower > MIN_TICK);
         require(tickUpper < MAX_TICK);
         require(tickLower < tickUpper);
+
+        Tick.UpdateParams memory params = Tick.UpdateParams(uint160(0), int56(0), uint32(block.timestamp), MAX_LIQUIDITY);
         bool flippedLower =
             ticks.update(
                 tickLower,
@@ -49,11 +51,8 @@ contract TickOverflowSafetyEchidnaTest {
                 liquidityDelta,
                 feeGrowthGlobal0X128,
                 feeGrowthGlobal1X128,
-                0,
-                0,
-                uint32(block.timestamp),
                 false,
-                MAX_LIQUIDITY
+                params
             );
         bool flippedUpper =
             ticks.update(
@@ -62,11 +61,8 @@ contract TickOverflowSafetyEchidnaTest {
                 liquidityDelta,
                 feeGrowthGlobal0X128,
                 feeGrowthGlobal1X128,
-                0,
-                0,
-                uint32(block.timestamp),
                 true,
-                MAX_LIQUIDITY
+                params
             );
 
         if (flippedLower) {

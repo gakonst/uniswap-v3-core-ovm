@@ -46,11 +46,8 @@ contract TickTest {
                 liquidityDelta,
                 feeGrowthGlobal0X128,
                 feeGrowthGlobal1X128,
-                secondsPerLiquidityCumulativeX128,
-                tickCumulative,
-                time,
                 upper,
-                maxLiquidity
+                Tick.UpdateParams(secondsPerLiquidityCumulativeX128, tickCumulative, time, maxLiquidity)
             );
     }
 
