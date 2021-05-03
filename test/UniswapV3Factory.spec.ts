@@ -87,8 +87,8 @@ describe('UniswapV3Factory', () => {
     const { logs } = await (await create).wait()
     // Cannot seem to parse events with waffle for some reason?
     // await expect(create)
-      // .to.emit(factory, 'PoolCreated')
-      // .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], feeAmount, tickSpacing, create2Address)
+    // .to.emit(factory, 'PoolCreated')
+    // .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], feeAmount, tickSpacing, create2Address)
     const log = factory.interface.decodeEventLog('PoolCreated', logs[1].data, logs[1].topics)
     expect(log.token0).to.be.eq(TEST_ADDRESSES[0])
     expect(log.token1).to.be.eq(TEST_ADDRESSES[1])

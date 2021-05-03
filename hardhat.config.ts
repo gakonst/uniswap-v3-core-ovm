@@ -22,7 +22,6 @@ extendEnvironment((hre) => {
       }
     }
 
-
     // Temporarily set gasPrice = 0, until l2geth provides pre-funded l2 accounts.
     const provider = new providers.JsonRpcProvider('http://localhost:8545')
     provider.pollingInterval = 100
@@ -39,11 +38,13 @@ extendEnvironment((hre) => {
     }
 
     hre.ethers.getSigners = async () => {
-      const wallets = await Promise.all(hre.waffle.provider.getWallets().map(async (s) => {
-        // @ts-ignore
-        const signerWithAddress = await SignerWithAddress.create(s)
-        return signerWithAddress
-      }))
+      const wallets = await Promise.all(
+        hre.waffle.provider.getWallets().map(async (s) => {
+          // @ts-ignore
+          const signerWithAddress = await SignerWithAddress.create(s)
+          return signerWithAddress
+        })
+      )
       return wallets
     }
   }
