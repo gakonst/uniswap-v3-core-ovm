@@ -42,26 +42,13 @@ contract TickOverflowSafetyEchidnaTest {
         require(tickLower > MIN_TICK);
         require(tickUpper < MAX_TICK);
         require(tickLower < tickUpper);
+
+        Tick.UpdateParams memory params =
+            Tick.UpdateParams(uint160(0), int56(0), uint32(block.timestamp), MAX_LIQUIDITY);
         bool flippedLower =
-            ticks.update(
-                tickLower,
-                tick,
-                liquidityDelta,
-                feeGrowthGlobal0X128,
-                feeGrowthGlobal1X128,
-                false,
-                MAX_LIQUIDITY
-            );
+            ticks.update(tickLower, tick, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, false, params);
         bool flippedUpper =
-            ticks.update(
-                tickUpper,
-                tick,
-                liquidityDelta,
-                feeGrowthGlobal0X128,
-                feeGrowthGlobal1X128,
-                true,
-                MAX_LIQUIDITY
-            );
+            ticks.update(tickUpper, tick, liquidityDelta, feeGrowthGlobal0X128, feeGrowthGlobal1X128, true, params);
 
         if (flippedLower) {
             if (liquidityDelta < 0) {
@@ -93,10 +80,11 @@ contract TickOverflowSafetyEchidnaTest {
         while (tick != target) {
             if (tick < target) {
                 if (ticks[tick + 1].liquidityGross > 0)
-                    ticks.cross(tick + 1, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+                    ticks.cross(tick + 1, feeGrowthGlobal0X128, feeGrowthGlobal1X128, 0, 0, uint32(block.timestamp));
                 tick++;
             } else {
-                if (ticks[tick].liquidityGross > 0) ticks.cross(tick, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+                if (ticks[tick].liquidityGross > 0)
+                    ticks.cross(tick, feeGrowthGlobal0X128, feeGrowthGlobal1X128, 0, 0, uint32(block.timestamp));
                 tick--;
             }
         }
