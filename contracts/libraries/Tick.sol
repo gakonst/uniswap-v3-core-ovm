@@ -94,7 +94,7 @@ library Tick {
         feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
     }
 
-    function decodeParams(bytes memory data) private view returns (UpdateParams memory params) {
+    function decodeParams(bytes memory data) private pure returns (UpdateParams memory params) {
         (uint160 secondsPerLiquidityCumulativeX128, int56 tickCumulative, uint32 time, uint128 maxLiquidity) = abi.decode(data, (uint160, int56, uint32, uint128));
         params = UpdateParams(
             secondsPerLiquidityCumulativeX128,
