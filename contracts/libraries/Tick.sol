@@ -95,13 +95,9 @@ library Tick {
     }
 
     function decodeParams(bytes memory data) private pure returns (UpdateParams memory params) {
-        (uint160 secondsPerLiquidityCumulativeX128, int56 tickCumulative, uint32 time, uint128 maxLiquidity) = abi.decode(data, (uint160, int56, uint32, uint128));
-        params = UpdateParams(
-            secondsPerLiquidityCumulativeX128,
-            tickCumulative,
-            time,
-            maxLiquidity
-        );
+        (uint160 secondsPerLiquidityCumulativeX128, int56 tickCumulative, uint32 time, uint128 maxLiquidity) =
+            abi.decode(data, (uint160, int56, uint32, uint128));
+        params = UpdateParams(secondsPerLiquidityCumulativeX128, tickCumulative, time, maxLiquidity);
     }
 
     function updateAndGetFeeGrowth(
@@ -113,7 +109,15 @@ library Tick {
         uint256 feeGrowthGlobal0X128,
         uint256 feeGrowthGlobal1X128,
         bytes memory data
-    ) public returns (bool flippedLower, bool flippedUpper, uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
+    )
+        public
+        returns (
+            bool flippedLower,
+            bool flippedUpper,
+            uint256 feeGrowthInside0X128,
+            uint256 feeGrowthInside1X128
+        )
+    {
         if (liquidityDelta != 0) {
             UpdateParams memory params = decodeParams(data);
 
@@ -140,8 +144,14 @@ library Tick {
             );
         }
 
-        (feeGrowthInside0X128, feeGrowthInside1X128) =
-            getFeeGrowthInside(self, tickLower, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+        (feeGrowthInside0X128, feeGrowthInside1X128) = getFeeGrowthInside(
+            self,
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            feeGrowthGlobal0X128,
+            feeGrowthGlobal1X128
+        );
     }
 
     struct UpdateParams {

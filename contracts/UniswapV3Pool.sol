@@ -152,19 +152,9 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         )
     {
         checkTicks(tickLower, tickUpper);
-        StateMath.SnapshotArgs memory args = StateMath.SnapshotArgs(
-            slot0,
-            liquidity,
-            _blockTimestamp(),
-            tickLower,
-            tickUpper
-
-        );
-        return StateMath.snapshotCumulativesInside(
-            ticks,
-            observations,
-            args
-        );
+        StateMath.SnapshotArgs memory args =
+            StateMath.SnapshotArgs(slot0, liquidity, _blockTimestamp(), tickLower, tickUpper);
+        return StateMath.snapshotCumulativesInside(ticks, observations, args);
     }
 
     /// @inheritdoc IUniswapV3PoolDerivedState
@@ -259,17 +249,14 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
             _slot0.tick
         );
 
-        (uint160 sqrtPriceAX96, uint160 sqrtPriceBX96) = TickMath.getSqrtRatioAtTicks(params.tickLower, params.tickUpper);
+        (uint160 sqrtPriceAX96, uint160 sqrtPriceBX96) =
+            TickMath.getSqrtRatioAtTicks(params.tickLower, params.tickUpper);
 
         if (params.liquidityDelta != 0) {
             if (_slot0.tick < params.tickLower) {
                 // current tick is below the passed range; liquidity can only become in range by crossing from left to
                 // right, when we'll need _more_ token0 (it's becoming more valuable) so user must provide it
-                amount0 = SqrtPriceMath.getAmount0Delta(
-                    sqrtPriceAX96,
-                    sqrtPriceBX96,
-                    params.liquidityDelta
-                );
+                amount0 = SqrtPriceMath.getAmount0Delta(sqrtPriceAX96, sqrtPriceBX96, params.liquidityDelta);
             } else if (_slot0.tick < params.tickUpper) {
                 // current tick is inside the passed range
                 uint128 liquidityBefore = liquidity; // SLOAD for gas optimization
@@ -284,27 +271,14 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
                     _slot0.observationCardinalityNext
                 );
 
-
-                amount0 = SqrtPriceMath.getAmount0Delta(
-                    _slot0.sqrtPriceX96,
-                    sqrtPriceBX96,
-                    params.liquidityDelta
-                );
-                amount1 = SqrtPriceMath.getAmount1Delta(
-                    sqrtPriceAX96,
-                    _slot0.sqrtPriceX96,
-                    params.liquidityDelta
-                );
+                amount0 = SqrtPriceMath.getAmount0Delta(_slot0.sqrtPriceX96, sqrtPriceBX96, params.liquidityDelta);
+                amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceAX96, _slot0.sqrtPriceX96, params.liquidityDelta);
 
                 liquidity = LiquidityMath.addDelta(liquidityBefore, params.liquidityDelta);
             } else {
                 // current tick is above the passed range; liquidity can only become in range by crossing from right to
                 // left, when we'll need _more_ token1 (it's becoming more valuable) so user must provide it
-                amount1 = SqrtPriceMath.getAmount1Delta(
-                    sqrtPriceAX96,
-                    sqrtPriceBX96,
-                    params.liquidityDelta
-                );
+                amount1 = SqrtPriceMath.getAmount1Delta(sqrtPriceAX96, sqrtPriceBX96, params.liquidityDelta);
             }
         }
     }
@@ -328,29 +302,30 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
 
         bytes memory data;
         {
-        uint32 time = _blockTimestamp();
-        (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) =
-            observations.observeSingle(
-                time,
-                0,
-                slot0.tick,
-                slot0.observationIndex,
-                liquidity,
-                slot0.observationCardinality
-            );
-        // NB: Work around stack too deep.
-        data = abi.encode(secondsPerLiquidityCumulativeX128, tickCumulative, time, maxLiquidityPerTick);
+            uint32 time = _blockTimestamp();
+            (int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128) =
+                observations.observeSingle(
+                    time,
+                    0,
+                    slot0.tick,
+                    slot0.observationIndex,
+                    liquidity,
+                    slot0.observationCardinality
+                );
+            // NB: Work around stack too deep.
+            data = abi.encode(secondsPerLiquidityCumulativeX128, tickCumulative, time, maxLiquidityPerTick);
         }
 
-        (bool flippedLower, bool flippedUpper, uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = ticks.updateAndGetFeeGrowth(
-            tickLower,
-            tickUpper,
-            tick,
-            liquidityDelta,
-            _feeGrowthGlobal0X128,
-            _feeGrowthGlobal1X128,
-            data
-        );
+        (bool flippedLower, bool flippedUpper, uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
+            ticks.updateAndGetFeeGrowth(
+                tickLower,
+                tickUpper,
+                tick,
+                liquidityDelta,
+                _feeGrowthGlobal0X128,
+                _feeGrowthGlobal1X128,
+                data
+            );
 
         if (flippedLower) {
             tickBitmap.flipTick(tickLower, tickSpacing);
@@ -402,7 +377,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         IUniswapV3MintCallback(msg.sender).uniswapV3MintCallback(amount0, amount1, data);
         require(
             (amount0 <= 0 || balance0Before.add(amount0) <= balance0()) &&
-            (amount1 <= 0 || balance1Before.add(amount1) <= balance1()),
+                (amount1 <= 0 || balance1Before.add(amount1) <= balance1()),
             'M'
         );
 
@@ -477,9 +452,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
         slot0.unlocked = false;
 
         require(
-            amountSpecified != 0 &&
-            slot0Start.unlocked &&
-            zeroForOne
+            amountSpecified != 0 && slot0Start.unlocked && zeroForOne
                 ? sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > TickMath.MIN_SQRT_RATIO
                 : sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < TickMath.MAX_SQRT_RATIO,
             'SPL'
@@ -495,27 +468,22 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
                 computedLatestObservation: false
             });
 
-        StateMath.SwapState memory  state;
+        StateMath.SwapState memory state;
         bool exactInput;
 
         // pack the arguments to avoid abi encoder
-        StateMath.SwapArgs memory args = StateMath.SwapArgs(
-            cache,
-            fee,
-            tickSpacing,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128,
-            zeroForOne,
-            amountSpecified,
-            sqrtPriceLimitX96
-        );
-        (state, cache, exactInput) = StateMath.swap(
-            args,
-            slot0,
-            ticks,
-            observations,
-            tickBitmap
-        );
+        StateMath.SwapArgs memory args =
+            StateMath.SwapArgs(
+                cache,
+                fee,
+                tickSpacing,
+                feeGrowthGlobal0X128,
+                feeGrowthGlobal1X128,
+                zeroForOne,
+                amountSpecified,
+                sqrtPriceLimitX96
+            );
+        (state, cache, exactInput) = StateMath.swap(args, slot0, ticks, observations, tickBitmap);
 
         // update liquidity if it changed
         if (cache.liquidityStart != state.liquidity) liquidity = state.liquidity;
