@@ -102,7 +102,7 @@ describe('UniswapV3Pool', () => {
     pool = await createPool(FeeAmount.MEDIUM, TICK_SPACINGS[FeeAmount.MEDIUM])
   })
 
-  it('constructor initializes immutables', async () => {
+  it.only('constructor initializes immutables', async () => {
     expect(await pool.factory()).to.eq(factory.address)
     expect(await pool.token0()).to.eq(token0.address)
     expect(await pool.token1()).to.eq(token1.address)
